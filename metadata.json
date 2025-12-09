@@ -1,0 +1,5 @@
+{
+  "name": "TileVision AI - Video Grid Studio",
+  "description": "Create stunning 2x2 video grids in your browser. Upload 4 videos, arrange them, and export a combined MP4. Features AI-powered content analysis and title generation using Gemini 2.5.",
+  "requestFramePermissions": []
+}
