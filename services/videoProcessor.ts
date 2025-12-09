@@ -35,11 +35,16 @@ export const captureFrame = (videoFile: File): Promise<string> => {
   });
 };
 
+interface RenderResult {
+  blob: Blob;
+  extension: string;
+}
+
 export const renderGridVideo = async (
   videos: (QueuedVideo | null)[],
   config: GridConfig,
   onProgress: (percent: number) => void
-): Promise<Blob> => {
+): Promise<RenderResult> => {
   return new Promise(async (resolve, reject) => {
     // 1. Setup Canvas
     const canvas = document.createElement("canvas");
@@ -108,17 +113,34 @@ export const renderGridVideo = async (
     const combinedTracks = [...canvasStream.getVideoTracks(), ...audioTracks];
     const combinedStream = new MediaStream(combinedTracks);
 
-    // Try standard MP4, then WebM
-    let mimeType = 'video/mp4';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-       mimeType = 'video/webm;codecs=vp9';
-       if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = 'video/webm';
-       }
+    /**
+     * MIME TYPE SELECTION FOR X (TWITTER) COMPATIBILITY:
+     * 1. Priority: MP4 with AAC (avc1 + mp4a.40.2). Most standard, but often not supported by Chrome MediaRecorder.
+     * 2. Fallback: WebM (VP9 + Opus). X supports WebM uploads well. 
+     * 3. Avoid: Generic "video/mp4" in Chrome often results in H.264 + Opus, which X rejects as "Incompatible Audio".
+     */
+    const mimeCandidates = [
+      { mime: 'video/mp4;codecs="avc1.424028,mp4a.40.2"', ext: 'mp4' }, // Accurate MP4
+      { mime: 'video/mp4;codecs="avc1.42E01E,mp4a.40.2"', ext: 'mp4' }, // Accurate MP4 Profile 2
+      { mime: 'video/webm;codecs=vp9,opus', ext: 'webm' }, // High quality WebM
+      { mime: 'video/webm;codecs=vp8,opus', ext: 'webm' }, // Standard WebM
+      { mime: 'video/webm', ext: 'webm' }, // Generic WebM
+      { mime: 'video/mp4', ext: 'mp4' }, // Generic MP4 (Last resort, likely Opus audio)
+    ];
+
+    let selectedMime = mimeCandidates[mimeCandidates.length - 1]; // Default fallback
+
+    for (const candidate of mimeCandidates) {
+      if (MediaRecorder.isTypeSupported(candidate.mime)) {
+        selectedMime = candidate;
+        break;
+      }
     }
 
+    console.log(`Using MIME: ${selectedMime.mime}, Extension: ${selectedMime.ext}`);
+
     const recorder = new MediaRecorder(combinedStream, {
-      mimeType,
+      mimeType: selectedMime.mime,
       videoBitsPerSecond: 5000000, // 5 Mbps
     });
 
@@ -128,7 +150,7 @@ export const renderGridVideo = async (
     };
 
     recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: mimeType });
+      const blob = new Blob(chunks, { type: selectedMime.mime });
       // Cleanup
       videoElements.forEach(v => {
         if(v) {
@@ -138,7 +160,7 @@ export const renderGridVideo = async (
         }
       });
       audioCtx.close();
-      resolve(blob);
+      resolve({ blob, extension: selectedMime.ext });
     };
 
     // 5. Playback & Draw Loop

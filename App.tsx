@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<ExportStatus>(ExportStatus.IDLE);
   const [progress, setProgress] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [downloadExt, setDownloadExt] = useState<string>("mp4");
   
   // AI Metadata State
   const [suggestedFilename, setSuggestedFilename] = useState("video-grid-export");
@@ -90,7 +91,7 @@ const App: React.FC = () => {
       await new Promise(r => setTimeout(r, 100));
       setStatus(ExportStatus.RECORDING);
 
-      const blob = await renderGridVideo(
+      const result = await renderGridVideo(
         videos, 
         {
           width: 1920,
@@ -102,8 +103,9 @@ const App: React.FC = () => {
         (pct) => setProgress(pct)
       );
 
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(result.blob);
       setDownloadUrl(url);
+      setDownloadExt(result.extension);
       setStatus(ExportStatus.COMPLETED);
     } catch (error) {
       console.error(error);
@@ -236,14 +238,21 @@ const App: React.FC = () => {
               </h3>
               
               {status === ExportStatus.COMPLETED && downloadUrl ? (
-                <a 
-                  href={downloadUrl}
-                  download={`${suggestedFilename}.mp4`}
-                  className="flex items-center justify-center gap-2 w-full bg-secondary hover:bg-emerald-400 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-emerald-900/20"
-                >
-                  <Download size={20} />
-                  Download MP4
-                </a>
+                <div className="space-y-2">
+                  <a 
+                    href={downloadUrl}
+                    download={`${suggestedFilename}.${downloadExt}`}
+                    className="flex items-center justify-center gap-2 w-full bg-secondary hover:bg-emerald-400 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-emerald-900/20"
+                  >
+                    <Download size={20} />
+                    Download {downloadExt.toUpperCase()}
+                  </a>
+                  {downloadExt === 'webm' && (
+                    <p className="text-xs text-yellow-500/80 text-center">
+                      Note: Exported as WebM for better X/Twitter compatibility.
+                    </p>
+                  )}
+                </div>
               ) : (
                 <button
                   onClick={handleExport}
