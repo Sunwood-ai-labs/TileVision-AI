@@ -23,3 +23,5 @@ export interface GridConfig {
 }
 
 export type GridPosition = 0 | 1 | 2 | 3; // Top-Left, Top-Right, Bottom-Left, Bottom-Right
+
+export type VideoResolution = '1080p' | '4k';

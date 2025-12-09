@@ -139,9 +139,13 @@ export const renderGridVideo = async (
 
     console.log(`Using MIME: ${selectedMime.mime}, Extension: ${selectedMime.ext}`);
 
+    // Adjust bitrate based on resolution
+    const is4K = config.width >= 3840;
+    const bitrate = is4K ? 25000000 : 8000000; // 25Mbps for 4K, 8Mbps for 1080p
+
     const recorder = new MediaRecorder(combinedStream, {
       mimeType: selectedMime.mime,
-      videoBitsPerSecond: 5000000, // 5 Mbps
+      videoBitsPerSecond: bitrate,
     });
 
     const chunks: Blob[] = [];

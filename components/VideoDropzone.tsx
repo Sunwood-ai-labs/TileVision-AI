@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Upload } from 'lucide-react';
 
 interface VideoDropzoneProps {
@@ -31,11 +31,7 @@ const VideoDropzone: React.FC<VideoDropzoneProps> = ({ onFilesAccepted, disabled
     <div
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-colors h-full min-h-[200px]
-        ${disabled 
-          ? 'border-gray-700 bg-gray-900/50 opacity-50 cursor-not-allowed' 
-          : 'border-gray-600 bg-gray-800/50 hover:border-primary hover:bg-gray-800 cursor-pointer'
-        }`}
+      className={`w-full group`}
     >
       <input
         type="file"
@@ -46,14 +42,31 @@ const VideoDropzone: React.FC<VideoDropzoneProps> = ({ onFilesAccepted, disabled
         id="video-upload"
         disabled={disabled}
       />
-      <label htmlFor="video-upload" className="flex flex-col items-center cursor-pointer w-full h-full justify-center">
-        <div className="p-4 rounded-full bg-gray-800 mb-4 text-primary">
-          <Upload size={32} />
+      <label 
+        htmlFor="video-upload" 
+        className={`
+            relative w-full flex flex-col items-center justify-center py-8 px-6 rounded-2xl border-[3px] border-black cursor-pointer transition-all duration-200 overflow-hidden
+            ${disabled 
+                ? 'bg-gray-200 opacity-60 cursor-not-allowed' 
+                : 'shadow-pop hover:shadow-pop-lg hover:-translate-y-1 active:translate-y-0 active:shadow-pop'
+            }
+        `}
+      >
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pop-yellow via-pop-pink to-pop-cyan opacity-90 group-hover:opacity-100 transition-opacity" />
+        
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center">
+            <div className="mb-2">
+                <Upload size={36} className="text-black drop-shadow-sm" strokeWidth={2.5} />
+            </div>
+            <span className="text-black font-black text-xl uppercase tracking-wider mb-1">
+                UPLOAD VIDEOS
+            </span>
+            <span className="text-black/80 font-bold text-xs">
+                (Max 4 Videos)
+            </span>
         </div>
-        <h3 className="text-lg font-semibold text-gray-200 mb-2">Drop videos here</h3>
-        <p className="text-sm text-gray-400 text-center max-w-xs">
-          Upload up to 4 videos. We'll arrange them in a grid automatically.
-        </p>
       </label>
     </div>
   );
